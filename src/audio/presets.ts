@@ -69,7 +69,13 @@ export function detectEntrainmentPreset(bands: BandMap): EntrainmentPreset {
     Exclude<EntrainmentPreset, 'Custom'>,
     BandMap,
   ][]) {
-    const matches = BAND_NAMES.every((id) => Math.abs(bands[id].intensity - presetBands[id].intensity) < 1);
+    // Beat-aware (research round: beats are user-editable now): a preset only
+    // matches when intensities AND beat frequencies are at their defaults.
+    const matches = BAND_NAMES.every(
+      (id) =>
+        Math.abs(bands[id].intensity - presetBands[id].intensity) < 1 &&
+        Math.abs(bands[id].beat - presetBands[id].beat) < 0.05,
+    );
     if (matches) return name;
   }
   return 'Custom';

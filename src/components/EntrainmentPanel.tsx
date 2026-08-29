@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, FormControlLabel, MenuItem, Select, Slider, Switch, TextField, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, FormControlLabel, MenuItem, Select, Slider, Switch, TextField, Tooltip, Typography } from '@mui/material';
 import { BAND_NAMES, ENTRAINMENT_BANDS, type BandName, type EntrainmentSettings } from '../audio/entrainment';
 import {
   applyEntrainmentPreset,
@@ -14,10 +14,19 @@ export interface EntrainmentPanelProps {
   onChange: (patch: Partial<EntrainmentSettings>) => void;
 }
 
+/** Beat slider steps per band — finer resolution at low frequencies. */
+const BEAT_STEP: Record<BandName, number> = {
+  delta: 0.25,
+  theta: 0.25,
+  alpha: 0.5,
+  beta: 0.5,
+  gamma: 1,
+};
+
 /** Band-intensity entrainment mixer card (webQ-synthesized design). */
 export default function EntrainmentPanel({ state, scheduleActive, onChange }: EntrainmentPanelProps) {
-  const patchBand = (id: BandName, intensity: number): void => {
-    const bands = { ...state.bands, [id]: { ...state.bands[id], intensity } };
+  const patchBand = (id: BandName, patch: Partial<{ intensity: number; beat: number }>): void => {
+    const bands = { ...state.bands, [id]: { ...state.bands[id], ...patch } };
     onChange({ bands, preset: detectEntrainmentPreset(bands) });
   };
 
@@ -29,9 +38,14 @@ export default function EntrainmentPanel({ state, scheduleActive, onChange }: En
     <Card variant="outlined" sx={{ flex: 1, minWidth: 280 }}>
       <CardContent sx={{ pb: '12px !important' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-          <Typography variant="h6" component="div">
-            Entrainment Mixer
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" component="div">
+              Entrainment Mixer
+            </Typography>
+            <Tooltip title="Controlled studies of binaural beats show mixed results. Useful for relaxation and experimentation — not a medical treatment.">
+              <Chip size="small" color="warning" variant="outlined" label="Emerging evidence" />
+            </Tooltip>
+          </Box>
           <FormControlLabel
             control={
               <Switch
@@ -46,7 +60,8 @@ export default function EntrainmentPanel({ state, scheduleActive, onChange }: En
         </Box>
 
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-          Five brainwave bands, each a binaural beat at the carrier (L) vs carrier+beat (R). Intensity sets loudness.
+          Five brainwave bands, each a binaural beat at the carrier (L) vs carrier+beat (R).
+          Intensity sets loudness; the small slider under each band tunes its beat frequency.
         </Typography>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 1 }}>
@@ -106,7 +121,7 @@ export default function EntrainmentPanel({ state, scheduleActive, onChange }: En
                   <Typography variant="caption">{def.label}</Typography>
                 </Box>
                 <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                  {bs.intensity.toFixed(0)} · {def.beat} Hz
+                  {bs.intensity.toFixed(0)} · {bs.beat.toFixed(1)} Hz
                 </Typography>
               </Box>
               <Slider
@@ -117,7 +132,25 @@ export default function EntrainmentPanel({ state, scheduleActive, onChange }: En
                 step={1}
                 disabled={manualDisabled}
                 valueLabelDisplay="auto"
-                onChange={(_, v) => patchBand(id, v as number)}
+                aria-label={`${def.label} intensity`}
+                onChange={(_, v) => patchBand(id, { intensity: v as number })}
+              />
+              <Slider
+                size="small"
+                value={bs.beat}
+                min={def.rangeHz[0]}
+                max={def.rangeHz[1]}
+                step={BEAT_STEP[id]}
+                disabled={manualDisabled}
+                valueLabelDisplay="auto"
+                valueLabelFormat={(v: number) => `${v} Hz`}
+                aria-label={`${def.label} beat frequency`}
+                onChange={(_, v) => patchBand(id, { beat: v as number })}
+                sx={{
+                  mt: -0.5,
+                  '& .MuiSlider-thumb': { width: 8, height: 8 },
+                  '& .MuiSlider-track': { height: 3 },
+                }}
               />
             </Box>
           );

@@ -39,6 +39,14 @@ export default function AboutDialog({ open, onClose, onExited }: AboutDialogProp
         <Typography variant="body1">
           For the binaural effect, use stereo headphones — each ear needs its own channel.
         </Typography>
+        <Typography variant="body2" mt={2} pl={2}>
+          Keep the volume at a comfortable level — extended listening above roughly 85 dB can
+          damage hearing over time. If your ears ring after a session, turn it down and take breaks.
+        </Typography>
+        <Typography variant="body2" mt={1} pl={2}>
+          A note on the science: controlled studies of binaural beats show mixed results. Treat
+          sessions as relaxation and experimentation, not as medical treatment.
+        </Typography>
         <Typography variant="body2" mt={1} pl={2}>
           The default modulation frequencies are set to 7.51 Hz, a value calculated to be the primary
           Schumann resonance oscillation in the 80&apos;s.

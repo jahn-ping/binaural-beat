@@ -47,6 +47,18 @@ describe('detectEntrainmentPreset', () => {
     bands.alpha = { ...bands.alpha, intensity: 55 };
     expect(detectEntrainmentPreset(bands)).toBe('Custom');
   });
+
+  it('returns Custom when a beat frequency is edited (beats are user-editable)', () => {
+    const bands = { ...ENTRAINMENT_PRESETS.Default };
+    bands.theta = { ...bands.theta, beat: 6.5 };
+    expect(detectEntrainmentPreset(bands)).toBe('Custom');
+  });
+
+  it('still detects a preset within beat rounding tolerance', () => {
+    const bands = { ...ENTRAINMENT_PRESETS.Default };
+    bands.alpha = { ...bands.alpha, beat: bands.alpha.beat + 0.01 };
+    expect(detectEntrainmentPreset(bands)).toBe('Default');
+  });
 });
 
 describe('applyEntrainmentPreset', () => {

@@ -235,7 +235,10 @@ export class AudioEngine {
       e0.schedule !== e1.schedule;
     if (!entChanged) {
       for (const id of BAND_NAMES) {
-        if (e0.bands[id].intensity !== e1.bands[id].intensity) {
+        if (
+          e0.bands[id].intensity !== e1.bands[id].intensity ||
+          e0.bands[id].beat !== e1.bands[id].beat
+        ) {
           entChanged = true;
           break;
         }
@@ -450,8 +453,12 @@ export class AudioEngine {
       clearTimeout(this.stopTimer);
       this.stopTimer = null;
     }
-    this.ensureGraph();
+    // iOS Safari (gauntlet P1): the AudioContext resume must fire synchronously
+    // inside the user-gesture task. Building the ~40-node graph first can burn
+    // the gesture window on slow mobile devices, leaving the context suspended
+    // (silently blocked for ~25% of mobile users). Resume first, build after.
     await Tone.start();
+    this.ensureGraph();
     // stop() clicked during the await above must abort the start (P0 race)
     if (this.startCancelled) return;
     // a stop while paused leaves the context suspended — always bring it back
